@@ -1,4 +1,4 @@
-using Unity.Netcode.Components;
+using Mirror;
 using UnityEngine;
 
 public class CharacterAnimation : MonoBehaviour

@@ -1,4 +1,4 @@
-using Unity.Netcode;
+using Mirror;
 using UnityEngine;
 
 public class PlayerAttack : NetworkBehaviour 
@@ -12,7 +12,7 @@ public class PlayerAttack : NetworkBehaviour
 
     void Update()
     {
-        if (IsOwner)
+        if (hasAuthority)
         {
             Attack();
         }

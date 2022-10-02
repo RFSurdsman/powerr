@@ -1,4 +1,4 @@
-using Unity.Netcode;
+using Mirror;
 using UnityEngine;
 
 public class PlayerMovement : NetworkBehaviour
@@ -11,8 +11,8 @@ public class PlayerMovement : NetworkBehaviour
     [SerializeField] float jumpSpeed = 1.5f;
 
     const float rotationY = -90;
-    readonly NetworkVariable<bool> isLeft = new(writePerm: NetworkVariableWritePermission.Owner);
-    readonly NetworkVariable<int> health = new(100);
+    [SyncVar(hook = nameof(OnIsLeftChanged))] bool isLeft = true;
+    [SyncVar(hook = nameof(OnHealthChanged))] int health = 100;
 
     void Awake()
     {
@@ -20,23 +20,23 @@ public class PlayerMovement : NetworkBehaviour
         characterAnimation = GetComponentInChildren<CharacterAnimation>();
     }
 
+    void OnIsLeftChanged(bool old, bool newV)
+    {
+        ResetRotation();
+    }
+
+    void OnHealthChanged(int a, int newHealth)
+    {
+        if (newHealth <= 0)
+        {
+            characterAnimation.Death();
+            CmdRevive();
+        }
+    }
+
     void Start()
     {
-        isLeft.OnValueChanged += (a, b) => ResetRotation();
-
-        if (IsOwner)
-        {
-            health.OnValueChanged += (a, newHealth) =>
-            {
-                if (newHealth <= 0)
-                {
-                    characterAnimation.Death();
-                    ReviveServerRpc();
-                }
-            };
-        }
-
-        if (!IsOwner)
+        if (!hasAuthority)
         {
             gameObject.layer = 7;
         }
@@ -44,7 +44,7 @@ public class PlayerMovement : NetworkBehaviour
 
     void Update()
     {
-        if (IsOwner && !characterAnimation.IsAttacking && health.Value > 0)
+        if (hasAuthority && !characterAnimation.IsAttacking && health > 0)
         {
             RotatePlayer();
             AnimatePlayerWalk();
@@ -53,7 +53,7 @@ public class PlayerMovement : NetworkBehaviour
 
     void FixedUpdate()
     {
-        if (IsOwner && !characterAnimation.IsAttacking && health.Value > 0)
+        if (hasAuthority && !characterAnimation.IsAttacking && health > 0)
         {
             DetectMovementClient();
         }
@@ -69,12 +69,12 @@ public class PlayerMovement : NetworkBehaviour
     {
         if (Input.GetAxisRaw("Horizontal") > 0)
         {
-            isLeft.Value = true;
+            CmdSetIsLeft(true);
             transform.rotation = Quaternion.Euler(0, rotationY, 0);
         } 
         else if (Input.GetAxisRaw("Horizontal") < 0)
         {
-            isLeft.Value = false;
+            CmdSetIsLeft(false);
             transform.rotation = Quaternion.Euler(0, Mathf.Abs(rotationY), 0);
         }
     }
@@ -91,7 +91,7 @@ public class PlayerMovement : NetworkBehaviour
 
     void ResetRotation()
     {
-        if (isLeft.Value)
+        if (isLeft)
         {
             transform.rotation = Quaternion.Euler(0, rotationY, 0);
         }
@@ -101,16 +101,22 @@ public class PlayerMovement : NetworkBehaviour
         }
     }
 
-    [ServerRpc]
-    public void ReviveServerRpc()
+    [Command]
+    void CmdSetIsLeft(bool value)
     {
-        health.Value = 100;
+        isLeft = value;
+    }
+
+    [Command]
+    public void CmdRevive()
+    {
+        health = 100;
     }
 
 
-    [ServerRpc(RequireOwnership = false)]
+    [Command(requiresAuthority = false)]
     public void ApplyDamageServerRpc(int damage)
     {
-        health.Value -= damage;
+        health -= damage;
     }
 }

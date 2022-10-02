@@ -1,4 +1,4 @@
-using Unity.Netcode;
+using Mirror;
 using UnityEngine;
 
 public class CharacterAnimationDelegate : NetworkBehaviour
@@ -58,7 +58,7 @@ public class CharacterAnimationDelegate : NetworkBehaviour
 
     void AttackOn(GameObject gameObject)
     {
-        if (IsOwner)
+        if (hasAuthority)
         {
             gameObject.SetActive(true);
         }
