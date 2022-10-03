@@ -1,2 +1,2 @@
 # powerr
-Multiplayer online fighting game. POWERRful mechanics.
+Multiplayer online fighting game. POWERRful mechanics. Made with Unity.
