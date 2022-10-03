@@ -1,2 +1,2 @@
 # powerr
-Multiplayer online fighting game designed around POWERRful abilities
+Multiplayer online fighting game. POWERRful mechanics.
