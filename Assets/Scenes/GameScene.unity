@@ -203,7 +203,7 @@ MonoBehaviour:
   offlineScene: 
   onlineScene: 
   transport: {fileID: 476196634}
-  networkAddress: localhost
+  networkAddress: ec2co-ecsel-1i1g2h0k0eaqk-2051266199.ap-southeast-2.elb.amazonaws.com
   maxConnections: 100
   authenticator: {fileID: 0}
   playerPrefab: {fileID: 8151147461345823204, guid: 1a949cbe6de94b44d81b52ce3ee86244, type: 3}

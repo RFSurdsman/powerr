@@ -1,0 +1,121 @@
+name: Pipeline
+
+#on:
+#  pull_request:
+#  push:
+#    branches:
+#      - master
+on: 
+  workflow_dispatch:
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+  UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+  UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: ap-southeast-2
+
+jobs:
+  determine_build_environment:
+    name: Determine build environment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set environment as production
+        if: github.ref == 'refs/heads/master'
+        uses: allenevans/set-env@v2.0.0
+        with:
+          BUILD_ENV: prod
+
+      - name: Set environment as staging
+        # if: github.ref != 'refs/heads/master' # Force everything to be staging for now.
+        uses: allenevans/set-env@v2.0.0
+        with:
+          BUILD_ENV: stg
+    outputs:
+      build_env: ${{ env.BUILD_ENV }}
+
+  build_and_deploy_server:
+    name: Build and deploy server
+    needs: determine_build_environment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          lfs: true
+
+      - name: Prepare Unity library cache
+        uses: actions/cache@v3
+        with:
+          path: Library
+          key: Library-Server
+
+      - name: Build game
+        uses: game-ci/unity-builder@v2
+        with:
+          unityVersion: 2021.3.10f1
+          targetPlatform: StandaloneLinux64
+          buildMethod: Powerr.Editor.CICDPipeline.BuildProject
+          customParameters: -standaloneBuildSubtarget Server
+          versioning: None
+
+      - name: Authenticate Docker
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate Docker metadata
+        id: docker_metadata
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/${{ github.repository }}-${{ needs.determine_build_environment.outputs.build_env }}
+          flavor: latest=true
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.docker_metadata.outputs.tags }}
+          labels: ${{ steps.docker_metadata.outputs.labels }}
+
+      - name: Deploy to Amazon ECS
+        run: aws ecs update-service --cluster powerr --service powerr-${{ needs.determine_build_environment.outputs.build_env }} --force-new-deployment
+
+  build_and_deploy_webgl_client:
+    name: Build and deploy WebGL client
+    needs: determine_build_environment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          lfs: true
+
+      - name: Prepare Unity library cache
+        uses: actions/cache@v3
+        with:
+          path: Library
+          key: Library-WebGL
+
+      - name: Build game
+        uses: game-ci/unity-builder@v2
+        with:
+          unityVersion: 2021.3.10f1
+          targetPlatform: WebGL
+          buildMethod: Powerr.Editor.CICDPipeline.BuildProject
+          versioning: None
+
+      - name: Deploy to Amazon S3 and invalidate Amazon CloudFront distribution
+        uses: reggionick/s3-deploy@v3
+        with:
+            folder: build/WebGL/WebGL
+            bucket: powerr-client-${{ needs.determine_build_environment.outputs.build_env }}
+            bucket-region: ap-southeast-2
+            invalidation: /*
+            dist-id: EMPPBAM46J1KE
+            delete-removed: true
