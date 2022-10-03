@@ -1,11 +1,10 @@
 name: Pipeline
 
-#on:
-#  pull_request:
-#  push:
-#    branches:
-#      - master
-on: 
+on:
+  pull_request:
+  push:
+    branches:
+      - master
   workflow_dispatch:
 
 env:
