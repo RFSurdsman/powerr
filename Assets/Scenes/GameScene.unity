@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 1396306438}
-  m_IndirectSpecularColor: {r: 0.16438884, g: 0.13814977, b: 0.1767746, a: 1}
+  m_IndirectSpecularColor: {r: 0.16574806, g: 0.13810244, b: 0.17734255, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -178,7 +178,7 @@ MonoBehaviour:
   clientMaxMessagesPerTick: 1000
   batchSend: 1
   waitBeforeSend: 0
-  clientUseWss: 0
+  clientUseWss: 1
   sslEnabled: 0
   sslCertJson: ./cert.json
   sslProtocols: 3072
@@ -203,7 +203,7 @@ MonoBehaviour:
   offlineScene: 
   onlineScene: 
   transport: {fileID: 476196634}
-  networkAddress: ec2co-ecsel-1i1g2h0k0eaqk-2051266199.ap-southeast-2.elb.amazonaws.com
+  networkAddress: server.powerr.gg
   maxConnections: 100
   authenticator: {fileID: 0}
   playerPrefab: {fileID: 8151147461345823204, guid: 1a949cbe6de94b44d81b52ce3ee86244, type: 3}
