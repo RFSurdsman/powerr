@@ -17,21 +17,17 @@ namespace Powerr.Character
         const string MOVEMENT_BOOL_PARAM = "Movement";
         const string NORMAL_PUNCH_TRIGGER_PARAM = "Punch";
         const string DEATH_TRIGGER_PARAM = "Death";
-        const string JUMP_START_TRIGGER_PARAM = "Jump Start";
-        const string JUMP_END_TRIGGER_PARAM = "Jump End";
+        const string JUMPING_PARAM = "Jumping";
 
         Animator animator;
         NetworkAnimator networkAnimator;
         CharacterMovementController movement;
-        bool isJumping = false;
-
-        [SyncVar(hook = nameof(OnRootMotionChanged))] bool applyRootMotion = true;
 
         public bool IsIdle => !IsJumping && IsCurrentStateName(IDLE_STATE);
         public bool IsWalking => !IsJumping && IsCurrentStateName(WALK_STATE);
         public bool IsPunching => !IsJumping && IsCurrentStateName(PUNCH_STATE);
         public bool IsDead => !IsJumping && IsCurrentStateName(DEATH_STATE);
-        public bool IsJumping => isJumping || IsCurrentStateName(JUMP_STATE);
+        public bool IsJumping => animator.GetBool(JUMPING_PARAM);
 
         bool IsCurrentStateName(string name) => animator.GetCurrentAnimatorStateInfo(BASE_LAYER).IsName(name);
 
@@ -57,18 +53,10 @@ namespace Powerr.Character
         public void Death() => networkAnimator.SetTrigger(DEATH_TRIGGER_PARAM);
 
         [Client]
-        public void JumpStart()
-        {
-            isJumping = true;
-            networkAnimator.SetTrigger(JUMP_START_TRIGGER_PARAM);
-        }
+        public void JumpStart() => animator.SetBool(JUMPING_PARAM, true);
 
         [Client]
-        public void JumpEnd()
-        {
-            isJumping = false;
-            networkAnimator.SetTrigger(JUMP_END_TRIGGER_PARAM);
-        }
+        public void JumpEnd() => animator.SetBool(JUMPING_PARAM, false);
 
         [Client]
         void UpdateRootMotion()
@@ -76,18 +64,10 @@ namespace Powerr.Character
             if (!hasAuthority)
             {
                 return;
-            }
-
-            UpdateRootMotion(movement.IsGrounded);
-            CmdUpdateRootMotion(movement.IsGrounded);
-        }
-
-        [Client]
-        void UpdateRootMotion(bool applyRootMotion)
-        {
-            if (IsIdle || IsWalking)
+            } 
+            else if (IsIdle || IsWalking)
             {
-                animator.applyRootMotion = applyRootMotion;
+                animator.applyRootMotion = movement.IsGrounded;
             }
             else if (IsJumping)
             {
@@ -98,14 +78,5 @@ namespace Powerr.Character
                 animator.applyRootMotion = true;
             }
         }
-
-        [Command]
-        void CmdUpdateRootMotion(bool applyRootMotion)
-        {
-            this.applyRootMotion = applyRootMotion;
-        }
-
-        [Client]
-        void OnRootMotionChanged(bool _, bool applyRootMotion) => UpdateRootMotion(applyRootMotion);
     }
 }
