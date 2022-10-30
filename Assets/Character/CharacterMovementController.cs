@@ -4,10 +4,11 @@ using UnityEngine;
 
 namespace Powerr.Character
 {
+    [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(CharacterAnimationController))]
     public class CharacterMovementController : NetworkBehaviour
     {
-        public enum WalkDirection
+        enum WalkDirection
         {
             Left,
             Right,
@@ -15,17 +16,34 @@ namespace Powerr.Character
 
         const float ROTATION_Y = 90;
         const int ENEMY_LAYER = 7;
+        const int JUMP_FORCE = 375;
+        const int JUMP_AIRBONE_SIDEWAYS_FORCE = 70;
+        const float GROUND_COLLISION_SPHERE_RADIUS = 0.1f;
 
-        CharacterAnimationController characterAnimationController;
+        [SerializeField] LayerMask groundLayer;
 
         [SyncVar(hook = nameof(OnWalkDirectionChanged))] WalkDirection walkDirection = WalkDirection.Right;
         [SyncVar(hook = nameof(OnHealthChanged))] int health = 100;
 
-        bool IsForceUpdateCharacterTransform => characterAnimationController.IsIdle || characterAnimationController.IsWalking;
+        BoxCollider boxCollider;
+        CharacterAnimationController characterAnimation;
+        Rigidbody characterRigidbody;
+
+        float lastJumpStartTime = 0;
+        float lastGroundTime = 0;
+        float lastGroundY = 0;
+
+        public bool IsGrounded => Time.fixedTime - lastGroundTime <= Time.fixedDeltaTime;
+        public bool IsCanPunch => !characterAnimation.IsJumping;
+        bool IsForceUpdateCharacterTransform => characterAnimation.IsIdle || characterAnimation.IsWalking;
+        float JumpAirboneSidewaysForceWithScaling => JUMP_AIRBONE_SIDEWAYS_FORCE * Time.fixedDeltaTime * Mathf.Min(1f / (Mathf.Abs(characterRigidbody.velocity.x) + 0.001f), 1f);
+
 
         void Awake()
         {
-            characterAnimationController = GetComponent<CharacterAnimationController>();
+            characterRigidbody = GetComponent<Rigidbody>();
+            characterAnimation = GetComponent<CharacterAnimationController>();
+            boxCollider = GetComponent<BoxCollider>();
         }
 
         void Start()
@@ -40,17 +58,35 @@ namespace Powerr.Character
         {
             UpdatePosition();
             UpdateRotation();
+            DetectGroundCollision();
+        }
+
+        void FixedUpdate()
+        {
+            EndJumpIfStarted();
+        }
+
+        [Client]
+        void DetectGroundCollision()
+        {
+            var hit = Physics.OverlapSphere(transform.position, GROUND_COLLISION_SPHERE_RADIUS, groundLayer);
+
+            if (hit.Length > 0)
+            {
+                lastGroundTime = Time.time;
+                lastGroundY = hit[0].transform.position.y;
+            }
         }
 
         [Client]
         void UpdatePosition()
         {
-            if (!IsForceUpdateCharacterTransform)
+            if (!IsForceUpdateCharacterTransform || !IsGrounded)
             {
                 return;
             }
 
-            transform.position = new Vector3(transform.position.x, 0);
+            transform.position = new Vector3(transform.position.x, lastGroundY);
         }
 
         [Client]
@@ -76,15 +112,15 @@ namespace Powerr.Character
         }
 
         [Client]
-        public void StartWalk() => characterAnimationController.Walk(true);
+        void StartWalk() => characterAnimation.Walk(true);
 
         [Client]
-        public void StopWalk() => characterAnimationController.Walk(false);
+        public void StopWalk() => characterAnimation.Walk(false);
 
         [Client]
-        public void RotatePlayer(WalkDirection walkDirection)
+        void RotatePlayer(WalkDirection walkDirection)
         {
-            if (walkDirection == this.walkDirection || !characterAnimationController.IsIdle && !characterAnimationController.IsWalking)
+            if (walkDirection == this.walkDirection || characterAnimation.IsPunching)
             {
                 return;
             }
@@ -94,6 +130,62 @@ namespace Powerr.Character
             if (hasAuthority)
             {
                 CmdSetWalkDirection(walkDirection);
+            }
+        }
+
+        [Client]
+        public void MoveRight()
+        {
+            RotatePlayer(WalkDirection.Right);
+
+            if (characterAnimation.IsJumping)
+            {
+                characterRigidbody.AddForce(new Vector3(-JumpAirboneSidewaysForceWithScaling, 0));
+            }
+            else
+            {
+                StartWalk();
+            }
+        }
+
+        [Client]
+        public void MoveLeft()
+        {
+            RotatePlayer(WalkDirection.Left);
+
+            if (characterAnimation.IsJumping)
+            {
+                characterRigidbody.AddForce(new Vector3(JumpAirboneSidewaysForceWithScaling, 0));
+            }
+            else
+            {
+                StartWalk();
+            }
+        }
+
+        [Client]
+        public void JumpStart()
+        {
+            if (!characterAnimation.IsJumping)
+            {
+                characterAnimation.JumpStart();
+                characterRigidbody.AddForce(new Vector3(0, JUMP_FORCE));
+                lastJumpStartTime = Time.time;
+            }
+        }
+
+        [Client]
+        void EndJumpIfStarted()
+        {
+            if (!hasAuthority)
+            {
+                return;
+            }
+
+            var isSufficientlyJumped = Time.time - lastJumpStartTime > Time.fixedDeltaTime;
+            if (characterAnimation.IsJumping && IsGrounded && isSufficientlyJumped)
+            {
+                characterAnimation.JumpEnd();
             }
         }
 
@@ -111,7 +203,7 @@ namespace Powerr.Character
         {
             if (hasAuthority && newHealth <= 0)
             {
-                characterAnimationController.Death();
+                characterAnimation.Death();
                 CmdRevive();
             }
         }

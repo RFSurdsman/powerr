@@ -21,21 +21,23 @@ namespace Powerr.UI.Control
             }
             else if (Input.GetKeyDown(KeyCode.Z))
             {
-                Character.Attack.NormalPunch();
+                Character.NormalPunch();
+            }
+            else if (Input.GetKeyDown(KeyCode.UpArrow))
+            {
+                Character.Jump();
             }
             else if (Input.GetAxisRaw(HORIZONTAL_AXIS) > 0)
             {
-                Character.Movement.StartWalk();
-                Character.Movement.RotatePlayer(CharacterMovementController.WalkDirection.Right);
+                Character.MoveRight();
             }
             else if (Input.GetAxisRaw(HORIZONTAL_AXIS) < 0)
             {
-                Character.Movement.StartWalk();
-                Character.Movement.RotatePlayer(CharacterMovementController.WalkDirection.Left);
+                Character.MoveLeft();
             }
             else
             {
-                Character.Movement.StopWalk();
+                Character.StopWalk();
             }
         }
     }

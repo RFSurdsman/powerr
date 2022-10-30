@@ -1,11 +1,13 @@
+using Mirror;
 using UnityEngine;
 
 namespace Powerr.Character
 {
     [RequireComponent(typeof(CharacterAnimationController))]
-    public class CharacterAttackController : MonoBehaviour
+    [RequireComponent(typeof(CharacterMovementController))]
+    public class CharacterAttackController : NetworkBehaviour
     {
-        CharacterAnimationController characterAnimationController;
+        CharacterAnimationController characterAnimation;
 
         public int DamageOnNextAttack
         {
@@ -14,9 +16,9 @@ namespace Powerr.Character
 
         void Awake()
         {
-            characterAnimationController = GetComponent<CharacterAnimationController>();
+            characterAnimation = GetComponent<CharacterAnimationController>();
         }
 
-        public void NormalPunch() => characterAnimationController.NormalPunch();
+        public void NormalPunch() => characterAnimation.NormalPunch();
     }
 }

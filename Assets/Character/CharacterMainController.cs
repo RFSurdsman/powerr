@@ -7,13 +7,41 @@ namespace Powerr.Character
     [RequireComponent(typeof(CharacterMovementController))]
     public class CharacterMainController : NetworkBehaviour
     {
-        public CharacterAttackController Attack { get; private set; }
-        public CharacterMovementController Movement { get; private set; }
+        CharacterAttackController attack;
+        CharacterMovementController movement;
 
         void Awake()
         {
-            Attack = GetComponent<CharacterAttackController>();
-            Movement = GetComponent<CharacterMovementController>();
+            attack = GetComponent<CharacterAttackController>();
+            movement = GetComponent<CharacterMovementController>();
+        }
+
+        public void NormalPunch()
+        {
+            if (movement.IsCanPunch)
+            {
+                attack.NormalPunch();
+            }
+        }
+
+        public void MoveRight()
+        {
+            movement.MoveRight();
+        }
+
+        public void MoveLeft()
+        {
+            movement.MoveLeft();
+        }
+
+        public void StopWalk()
+        {
+            movement.StopWalk();
+        }
+
+        public void Jump()
+        {
+            movement.JumpStart();
         }
     }
 }
