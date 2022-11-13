@@ -19,7 +19,7 @@ namespace Powerr.UI.Control
             {
                 return;
             }
-            else if (Input.GetKeyDown(KeyCode.Z))
+            else if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.D))
             {
                 Character.NormalPunch();
             }

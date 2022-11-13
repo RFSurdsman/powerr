@@ -184,8 +184,8 @@ namespace Powerr.Character
                 return;
             }
 
-            var isOnGround = Time.fixedTime - lastGroundTime <= Time.fixedDeltaTime;
-            var isSufficientlyJumped = Time.fixedTime - lastJumpStartTime > Time.fixedDeltaTime;
+            var isOnGround = Time.time - lastGroundTime <= Math.Min(Time.deltaTime, Time.fixedDeltaTime);
+            var isSufficientlyJumped = Time.fixedTime - lastJumpStartTime > Math.Max(Time.deltaTime, Time.fixedDeltaTime) * 5;
             if (isSufficientlyJumped)
             {
                 if (!characterAnimation.IsJumping && !isOnGround)
