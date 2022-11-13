@@ -62,7 +62,7 @@ namespace Powerr.Character
 
         void FixedUpdate()
         {
-            EndJumpIfStarted();
+            UpdateJump();
         }
 
         [Client]
@@ -177,7 +177,7 @@ namespace Powerr.Character
         }
 
         [Client]
-        void EndJumpIfStarted()
+        void UpdateJump()
         {
             if (!hasAuthority)
             {
@@ -185,10 +185,20 @@ namespace Powerr.Character
             }
 
             var isOnGround = Time.fixedTime - lastGroundTime <= Time.fixedDeltaTime;
-            var isSufficientlyJumped = Time.time - lastJumpStartTime > Time.fixedDeltaTime;
-            if (characterAnimation.IsJumping && isOnGround && isSufficientlyJumped)
+            var isSufficientlyJumped = Time.fixedTime - lastJumpStartTime > Time.fixedDeltaTime;
+            if (isSufficientlyJumped)
             {
-                characterAnimation.JumpEnd();
+                if (!characterAnimation.IsJumping && !isOnGround)
+                {
+                    // Character has become airborne - show jumping/airbone animation.
+                    characterAnimation.JumpStart();
+                }
+                else if (characterAnimation.IsJumping && isOnGround)
+                {
+                    // Character was jumping/airbone but has reached the ground - end jumping/airbone animation.
+                    characterAnimation.JumpEnd();
+                }
+
             }
         }
 
