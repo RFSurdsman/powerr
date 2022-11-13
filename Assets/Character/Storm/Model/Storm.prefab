@@ -2406,7 +2406,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8015057217283952256}
   - component: {fileID: 1851730253574436530}
-  - component: {fileID: 7560543396608073412}
+  - component: {fileID: 7979429879241907866}
   - component: {fileID: 4425866458806758745}
   - component: {fileID: 7503006463067991168}
   - component: {fileID: 1443281587708978771}
@@ -2449,15 +2449,15 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8151147461345823204}
   serializedVersion: 2
-  m_Mass: 1
+  m_Mass: 0.9
   m_Drag: 0
-  m_AngularDrag: 0.05
+  m_AngularDrag: 0
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 120
   m_CollisionDetection: 0
---- !u!136 &7560543396608073412
+--- !u!136 &7979429879241907866
 CapsuleCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2467,10 +2467,10 @@ CapsuleCollider:
   m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
-  m_Radius: 0.3
-  m_Height: 2
+  m_Radius: 0.28
+  m_Height: 1.7
   m_Direction: 1
-  m_Center: {x: 0, y: 0.75, z: 0}
+  m_Center: {x: 0, y: 0.85, z: 0}
 --- !u!95 &4425866458806758745
 Animator:
   serializedVersion: 4
@@ -2517,6 +2517,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a346c28047eeb5946b0381fdcc149eb6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncMode: 0
+  syncInterval: 0.1
 --- !u!114 &9066131368491039727
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2531,6 +2533,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncMode: 0
   syncInterval: 0.1
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 256
 --- !u!114 &-3586604649601598783
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2543,6 +2548,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: feda959e2e93b044eaeadaa7b5bfe038, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncMode: 0
+  syncInterval: 0.1
 --- !u!114 &6972003987956253527
 MonoBehaviour:
   m_ObjectHideFlags: 0
