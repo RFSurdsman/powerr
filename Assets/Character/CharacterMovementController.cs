@@ -16,7 +16,7 @@ namespace Powerr.Character
 
         const float ROTATION_Y = 90;
         const int ENEMY_LAYER = 7;
-        const int JUMP_FORCE = 375;
+        const int JUMP_FORCE = 325;
         const int JUMP_AIRBONE_SIDEWAYS_FORCE = 70;
         const float GROUND_COLLISION_SPHERE_RADIUS = 0.1f;
 
@@ -33,10 +33,9 @@ namespace Powerr.Character
         float lastGroundTime = 0;
         float lastGroundY = 0;
 
-        public bool IsGrounded => Time.fixedTime - lastGroundTime <= Time.fixedDeltaTime;
-        public bool IsCanPunch => !characterAnimation.IsJumping;
+        public bool IsGrounded => !characterAnimation.IsJumping && Time.fixedTime - lastGroundTime <= Time.fixedDeltaTime;
         bool IsForceUpdateCharacterTransform => characterAnimation.IsIdle || characterAnimation.IsWalking;
-        float JumpAirboneSidewaysForceWithScaling => JUMP_AIRBONE_SIDEWAYS_FORCE * Time.fixedDeltaTime * Mathf.Min(1f / (Mathf.Abs(characterRigidbody.velocity.x) + 0.001f), 1f);
+        float JumpAirboneSidewaysForceWithScaling => JUMP_AIRBONE_SIDEWAYS_FORCE * Time.fixedDeltaTime * Mathf.Min(1f / (Mathf.Abs(characterRigidbody.velocity.x) + 0.001f), 0.5f);
 
 
         void Awake()
@@ -166,7 +165,7 @@ namespace Powerr.Character
         [Client]
         public void JumpStart()
         {
-            if (!characterAnimation.IsJumping)
+            if (IsGrounded)
             {
                 characterAnimation.JumpStart();
                 characterRigidbody.AddForce(new Vector3(0, JUMP_FORCE));
@@ -182,8 +181,9 @@ namespace Powerr.Character
                 return;
             }
 
+            var isOnGround = Time.fixedTime - lastGroundTime <= Time.fixedDeltaTime;
             var isSufficientlyJumped = Time.time - lastJumpStartTime > Time.fixedDeltaTime;
-            if (characterAnimation.IsJumping && IsGrounded && isSufficientlyJumped)
+            if (characterAnimation.IsJumping && isOnGround && isSufficientlyJumped)
             {
                 characterAnimation.JumpEnd();
             }

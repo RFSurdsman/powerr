@@ -18,7 +18,7 @@ namespace Powerr.Character
 
         public void NormalPunch()
         {
-            if (movement.IsCanPunch)
+            if (movement.IsGrounded)
             {
                 attack.NormalPunch();
             }
