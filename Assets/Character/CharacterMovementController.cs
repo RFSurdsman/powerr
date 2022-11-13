@@ -34,7 +34,7 @@ namespace Powerr.Character
         float lastGroundY = 0;
 
         public bool IsGrounded => !characterAnimation.IsJumping && Time.fixedTime - lastGroundTime <= Time.fixedDeltaTime;
-        bool IsForceUpdateCharacterTransform => characterAnimation.IsIdle || characterAnimation.IsWalking;
+        bool IsForceUpdateCharacterTransform => characterAnimation.IsIdle || characterAnimation.IsWalking || characterAnimation.IsCrouching;
         float JumpAirboneSidewaysForceWithScaling => JUMP_AIRBONE_SIDEWAYS_FORCE * Time.fixedDeltaTime * Mathf.Min(1f / (Mathf.Abs(characterRigidbody.velocity.x) + 0.001f), 0.5f);
 
 
@@ -115,6 +115,9 @@ namespace Powerr.Character
 
         [Client]
         public void StopWalk() => characterAnimation.Walk(false);
+
+        [Client]
+        public void Crouch(bool isCrouching) => characterAnimation.Crouch(isCrouching);
 
         [Client]
         void RotatePlayer(WalkDirection walkDirection)

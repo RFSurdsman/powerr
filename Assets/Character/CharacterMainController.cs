@@ -43,5 +43,10 @@ namespace Powerr.Character
         {
             movement.JumpStart();
         }
+
+        public void Crouch(bool isCrouching)
+        {
+            movement.Crouch(movement.IsGrounded && isCrouching);
+        }
     }
 }

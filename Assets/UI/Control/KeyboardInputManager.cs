@@ -39,6 +39,8 @@ namespace Powerr.UI.Control
             {
                 Character.StopWalk();
             }
+
+            Character.Crouch(Input.GetKey(KeyCode.DownArrow));
         }
     }
 }
