@@ -57,12 +57,12 @@ namespace Powerr.Character
         {
             UpdatePosition();
             UpdateRotation();
-            DetectGroundCollision();
         }
 
         void FixedUpdate()
         {
             UpdateJump();
+            DetectGroundCollision();
         }
 
         [Client]
@@ -72,7 +72,7 @@ namespace Powerr.Character
 
             if (hit.Length > 0)
             {
-                lastGroundTime = Time.time;
+                lastGroundTime = Time.fixedTime;
                 lastGroundY = hit[0].transform.position.y;
             }
         }
@@ -172,7 +172,7 @@ namespace Powerr.Character
             {
                 characterAnimation.JumpStart();
                 characterRigidbody.AddForce(new Vector3(0, JUMP_FORCE));
-                lastJumpStartTime = Time.time;
+                lastJumpStartTime = Time.fixedTime;
             }
         }
 
@@ -184,21 +184,18 @@ namespace Powerr.Character
                 return;
             }
 
-            var isOnGround = Time.time - lastGroundTime <= Math.Min(Time.deltaTime, Time.fixedDeltaTime);
-            var isSufficientlyJumped = Time.fixedTime - lastJumpStartTime > Math.Max(Time.deltaTime, Time.fixedDeltaTime) * 5;
-            if (isSufficientlyJumped)
-            {
-                if (!characterAnimation.IsJumping && !isOnGround)
-                {
-                    // Character has become airborne - show jumping/airbone animation.
-                    characterAnimation.JumpStart();
-                }
-                else if (characterAnimation.IsJumping && isOnGround)
-                {
-                    // Character was jumping/airbone but has reached the ground - end jumping/airbone animation.
-                    characterAnimation.JumpEnd();
-                }
+            var isOnGround = Time.fixedTime - lastGroundTime <= Time.fixedDeltaTime * 2;
+            var isSufficientlyJumped = Time.fixedTime - lastJumpStartTime > Time.fixedDeltaTime * 3;
 
+            if (!characterAnimation.IsJumping && !isOnGround)
+            {
+                // Character has become airborne - show jumping/airbone animation.
+                characterAnimation.JumpStart();
+            }
+            else if (characterAnimation.IsJumping && isOnGround && isSufficientlyJumped)
+            {
+                // Character was jumping/airbone but has reached the ground - end jumping/airbone animation.
+                characterAnimation.JumpEnd();
             }
         }
 
