@@ -34,7 +34,7 @@ namespace Powerr.Character
         float lastGroundY = 0;
 
         public bool IsGrounded => !characterAnimation.IsJumping && Time.fixedTime - lastGroundTime <= Time.fixedDeltaTime;
-        bool IsForceUpdateCharacterTransform => characterAnimation.IsIdle || characterAnimation.IsWalking;
+        bool IsForceUpdateCharacterTransform => characterAnimation.IsIdle || characterAnimation.IsWalking || characterAnimation.IsCrouching;
         float JumpAirboneSidewaysForceWithScaling => JUMP_AIRBONE_SIDEWAYS_FORCE * Time.fixedDeltaTime * Mathf.Min(1f / (Mathf.Abs(characterRigidbody.velocity.x) + 0.001f), 0.5f);
 
 
@@ -57,12 +57,12 @@ namespace Powerr.Character
         {
             UpdatePosition();
             UpdateRotation();
-            DetectGroundCollision();
         }
 
         void FixedUpdate()
         {
-            EndJumpIfStarted();
+            UpdateJump();
+            DetectGroundCollision();
         }
 
         [Client]
@@ -72,7 +72,7 @@ namespace Powerr.Character
 
             if (hit.Length > 0)
             {
-                lastGroundTime = Time.time;
+                lastGroundTime = Time.fixedTime;
                 lastGroundY = hit[0].transform.position.y;
             }
         }
@@ -115,6 +115,9 @@ namespace Powerr.Character
 
         [Client]
         public void StopWalk() => characterAnimation.Walk(false);
+
+        [Client]
+        public void Crouch(bool isCrouching) => characterAnimation.Crouch(isCrouching);
 
         [Client]
         void RotatePlayer(WalkDirection walkDirection)
@@ -169,22 +172,29 @@ namespace Powerr.Character
             {
                 characterAnimation.JumpStart();
                 characterRigidbody.AddForce(new Vector3(0, JUMP_FORCE));
-                lastJumpStartTime = Time.time;
+                lastJumpStartTime = Time.fixedTime;
             }
         }
 
         [Client]
-        void EndJumpIfStarted()
+        void UpdateJump()
         {
             if (!hasAuthority)
             {
                 return;
             }
 
-            var isOnGround = Time.fixedTime - lastGroundTime <= Time.fixedDeltaTime;
-            var isSufficientlyJumped = Time.time - lastJumpStartTime > Time.fixedDeltaTime;
-            if (characterAnimation.IsJumping && isOnGround && isSufficientlyJumped)
+            var isOnGround = Time.fixedTime - lastGroundTime <= Time.fixedDeltaTime * 2;
+            var isSufficientlyJumped = Time.fixedTime - lastJumpStartTime > Time.fixedDeltaTime * 3;
+
+            if (!characterAnimation.IsJumping && !isOnGround)
             {
+                // Character has become airborne - show jumping/airbone animation.
+                characterAnimation.JumpStart();
+            }
+            else if (characterAnimation.IsJumping && isOnGround && isSufficientlyJumped)
+            {
+                // Character was jumping/airbone but has reached the ground - end jumping/airbone animation.
                 characterAnimation.JumpEnd();
             }
         }

@@ -14,10 +14,12 @@ namespace Powerr.Character
         const string PUNCH_STATE = "Punch";
         const string DEATH_STATE = "Death";
         const string JUMP_STATE = "Jump";
+        const string CROUCH_STATE = "Crouch";
         const string MOVEMENT_BOOL_PARAM = "Movement";
         const string NORMAL_PUNCH_TRIGGER_PARAM = "Punch";
         const string DEATH_TRIGGER_PARAM = "Death";
-        const string JUMPING_PARAM = "Jumping";
+        const string JUMPING_BOOL_PARAM = "Jumping";
+        const string CROUCHING_BOOL_PARAM = "Crouching";
 
         Animator animator;
         NetworkAnimator networkAnimator;
@@ -27,7 +29,8 @@ namespace Powerr.Character
         public bool IsWalking => !IsJumping && IsCurrentStateName(WALK_STATE);
         public bool IsPunching => !IsJumping && IsCurrentStateName(PUNCH_STATE);
         public bool IsDead => !IsJumping && IsCurrentStateName(DEATH_STATE);
-        public bool IsJumping => animator.GetBool(JUMPING_PARAM);
+        public bool IsJumping => animator.GetBool(JUMPING_BOOL_PARAM);
+        public bool IsCrouching => IsCurrentStateName(CROUCH_STATE);
 
         bool IsCurrentStateName(string name) => animator.GetCurrentAnimatorStateInfo(BASE_LAYER).IsName(name);
 
@@ -45,6 +48,8 @@ namespace Powerr.Character
 
         [Client]
         public void Walk(bool isMoving) => animator.SetBool(MOVEMENT_BOOL_PARAM, isMoving);
+        [Client]
+        public void Crouch(bool isCrouching) => animator.SetBool(CROUCHING_BOOL_PARAM, isCrouching);
 
         [Client]
         public void NormalPunch() => networkAnimator.SetTrigger(NORMAL_PUNCH_TRIGGER_PARAM);
@@ -53,10 +58,10 @@ namespace Powerr.Character
         public void Death() => networkAnimator.SetTrigger(DEATH_TRIGGER_PARAM);
 
         [Client]
-        public void JumpStart() => animator.SetBool(JUMPING_PARAM, true);
+        public void JumpStart() => animator.SetBool(JUMPING_BOOL_PARAM, true);
 
         [Client]
-        public void JumpEnd() => animator.SetBool(JUMPING_PARAM, false);
+        public void JumpEnd() => animator.SetBool(JUMPING_BOOL_PARAM, false);
 
         [Client]
         void UpdateRootMotion()
